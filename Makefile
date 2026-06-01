@@ -1,4 +1,4 @@
-.PHONY: up down build logs migrate import-questions shell-backend shell-bot psql
+.PHONY: up down build logs migrate import-questions shell-backend shell-bot psql backup help
 
 up:
 	docker compose up -d
@@ -39,6 +39,23 @@ restart-bot:
 restart-backend:
 	docker compose restart backend
 
+backup:
+	sudo /home/lexa/ege-bot/scripts/backup.sh
+
 # First deploy
 init: build up migrate import-questions
 	@echo "✅ EGE Bot is ready!"
+
+help:
+	@echo "EGE Bot — команды:"
+	@echo "  make init              — первый запуск (build+up+migrate+import)"
+	@echo "  make up/down/build     — управление контейнерами"
+	@echo "  make logs              — логи всех контейнеров"
+	@echo "  make logs-bot          — логи бота"
+	@echo "  make logs-backend      — логи бэкенда"
+	@echo "  make migrate           — запустить миграции alembic"
+	@echo "  make import-questions  — загрузить задания из data/questions/"
+	@echo "  make backup            — ручной бэкап БД"
+	@echo "  make psql              — подключиться к PostgreSQL"
+	@echo "  make restart-bot       — рестарт контейнера бота"
+	@echo "  make restart-backend   — рестарт контейнера бэкенда"
