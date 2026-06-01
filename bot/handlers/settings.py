@@ -9,12 +9,13 @@ from bot.utils.api_client import APIClient
 router = Router()
 
 
-def settings_menu_keyboard(exam_type: str, subjects: list[str]) -> object:
+def settings_menu_keyboard(exam_type: str, subjects: list[str], role: str = "student") -> object:
     exam_label = "ЕГЭ" if exam_type == "ege" else "ОГЭ"
-    subj_labels = ", ".join(SUBJECTS.get(s, s) for s in subjects) if subjects else "все"
     builder = InlineKeyboardBuilder()
-    builder.button(text=f"📘 Экзамен: {exam_label}", callback_data="settings:change_exam")
-    builder.button(text="📚 Изменить предметы", callback_data="settings:change_subjects")
+    if role != "parent":
+        builder.button(text=f"📘 Экзамен: {exam_label}", callback_data="settings:change_exam")
+        builder.button(text="📚 Изменить предметы", callback_data="settings:change_subjects")
+    builder.button(text="🔑 Мой код для родителя", callback_data="settings:my_code")
     builder.button(text="🔙 Главное меню", callback_data="menu:main")
     builder.adjust(1)
     return builder.as_markup()
@@ -46,14 +47,36 @@ def settings_subjects_keyboard(exam_type: str, selected: list[str]) -> object:
 async def settings_menu(callback: CallbackQuery, state: FSMContext, api: APIClient):
     await state.clear()
     user = await api.get_user(callback.from_user.id)
+    role = (user or {}).get("role", "student")
     exam_type = (user or {}).get("selected_exam") or "ege"
     subjects = (user or {}).get("selected_subjects") or []
 
+    if role == "parent":
+        text = "⚙️ <b>Настройки</b>\n\nРоль: <b>Родитель</b>"
+    else:
+        text = (
+            "⚙️ <b>Настройки</b>\n\n"
+            f"Экзамен: <b>{'ЕГЭ' if exam_type == 'ege' else 'ОГЭ'}</b>\n"
+            f"Предметы: <b>{len(subjects)}</b> выбрано"
+        )
+
     await callback.message.edit_text(
-        "⚙️ <b>Настройки</b>\n\n"
-        f"Экзамен: <b>{'ЕГЭ' if exam_type == 'ege' else 'ОГЭ'}</b>\n"
-        f"Предметы: <b>{len(subjects)}</b> выбрано",
-        reply_markup=settings_menu_keyboard(exam_type, subjects),
+        text, reply_markup=settings_menu_keyboard(exam_type, subjects, role), parse_mode="HTML",
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data == "settings:my_code")
+async def my_code(callback: CallbackQuery, api: APIClient):
+    user = await api.get_user(callback.from_user.id)
+    code = (user or {}).get("referral_code") or "—"
+    builder = InlineKeyboardBuilder()
+    builder.button(text="🔙 Назад", callback_data="menu:settings")
+    await callback.message.edit_text(
+        f"🔑 <b>Твой код для родителя:</b>\n\n"
+        f"<code>{code}</code>\n\n"
+        "<i>Отправь этот код родителю — он введёт его в боте при регистрации.</i>",
+        reply_markup=builder.as_markup(),
         parse_mode="HTML",
     )
     await callback.answer()

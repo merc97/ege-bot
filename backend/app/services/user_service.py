@@ -49,12 +49,37 @@ class UserService:
         user = await self.get_by_telegram_id(telegram_id)
         if not user:
             raise ValueError("User not found")
-        user.selected_exam = data.selected_exam
-        user.selected_subjects = data.selected_subjects
+        user.role = data.role
+        if data.selected_exam is not None:
+            user.selected_exam = data.selected_exam
+        if data.selected_subjects is not None:
+            user.selected_subjects = data.selected_subjects
         user.onboarding_done = True
         await self.db.commit()
         await self.db.refresh(user)
         return user
+
+    async def link_parent_to_student(self, parent_telegram_id: int, student_code: str) -> User:
+        parent = await self.get_by_telegram_id(parent_telegram_id)
+        if not parent:
+            raise ValueError("Parent not found")
+        result = await self.db.execute(select(User).where(User.referral_code == student_code.upper().strip()))
+        student = result.scalar_one_or_none()
+        if not student:
+            raise ValueError("Student code not found")
+        if student.telegram_id == parent.telegram_id:
+            raise ValueError("Cannot link to yourself")
+        parent.linked_student_id = student.id
+        parent.parent_linked_at = datetime.utcnow()
+        await self.db.commit()
+        await self.db.refresh(parent)
+        return parent
+
+    async def get_linked_student(self, parent_telegram_id: int) -> User | None:
+        parent = await self.get_by_telegram_id(parent_telegram_id)
+        if not parent or not parent.linked_student_id:
+            return None
+        return await self.db.get(User, parent.linked_student_id)
 
     async def can_use_ai(self, user: User) -> bool:
         if user.subscription_type == "premium":

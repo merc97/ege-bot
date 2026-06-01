@@ -17,6 +17,23 @@ EGE_SUBJECTS = ["math", "russian", "physics", "chemistry", "biology", "history",
 OGE_SUBJECTS = ["math", "russian", "physics", "chemistry", "biology", "history", "social", "english", "informatics"]
 
 
+def role_keyboard() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.button(text="🎓 Я ученик", callback_data="onboard:role:student")
+    builder.button(text="👨‍👩‍👧 Я родитель", callback_data="onboard:role:parent")
+    builder.adjust(2)
+    return builder.as_markup()
+
+
+def parent_menu_keyboard() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.button(text="👨‍👩‍👧 Панель ученика", callback_data="parent:dashboard")
+    builder.button(text="❓ FAQ", callback_data="menu:faq")
+    builder.button(text="⚙️ Настройки", callback_data="menu:settings")
+    builder.adjust(1)
+    return builder.as_markup()
+
+
 def main_menu_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(text="📚 Начать тест", callback_data="menu:test")

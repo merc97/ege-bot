@@ -7,7 +7,7 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage
 
 from bot.config import settings
-from bot.handlers import start, test, progress, faq, admin, subscribe, history
+from bot.handlers import start, test, progress, faq, admin, subscribe, history, parent
 from bot.handlers import settings as settings_handler
 from bot.middlewares.user_middleware import UserMiddleware
 from bot.utils.api_client import APIClient
@@ -36,6 +36,7 @@ async def main() -> None:
     dp.include_router(test.router)
     dp.include_router(progress.router)
     dp.include_router(history.router)
+    dp.include_router(parent.router)
     dp.include_router(faq.router)
     dp.include_router(settings_handler.router)
     dp.include_router(admin.router)

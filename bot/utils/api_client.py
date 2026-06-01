@@ -32,12 +32,50 @@ class APIClient:
             r.raise_for_status()
             return r.json()
 
-    async def complete_onboarding(self, telegram_id: int, exam: str, subjects: list[str]) -> dict:
+    async def complete_onboarding(
+        self, telegram_id: int, exam: str | None = None,
+        subjects: list[str] | None = None, role: str = "student",
+    ) -> dict:
         async with self._client() as c:
             r = await c.put(f"/api/v1/users/{telegram_id}/onboarding", json={
+                "role": role,
                 "selected_exam": exam,
                 "selected_subjects": subjects,
             })
+            r.raise_for_status()
+            return r.json()
+
+    async def link_student(self, parent_telegram_id: int, student_code: str) -> dict:
+        async with self._client() as c:
+            r = await c.post(f"/api/v1/users/{parent_telegram_id}/link-student",
+                             json={"student_code": student_code})
+            if r.status_code == 404:
+                return {"error": r.json().get("detail", "not_found")}
+            r.raise_for_status()
+            return r.json()
+
+    async def get_linked_student(self, parent_telegram_id: int) -> dict | None:
+        async with self._client() as c:
+            r = await c.get(f"/api/v1/users/{parent_telegram_id}/student")
+            if r.status_code == 404:
+                return None
+            r.raise_for_status()
+            return r.json()
+
+    async def get_student_progress(self, parent_telegram_id: int) -> dict | None:
+        async with self._client() as c:
+            r = await c.get(f"/api/v1/users/{parent_telegram_id}/student/progress")
+            if r.status_code == 404:
+                return None
+            r.raise_for_status()
+            return r.json()
+
+    async def get_student_history(self, parent_telegram_id: int, page: int = 1) -> dict | None:
+        async with self._client() as c:
+            r = await c.get(f"/api/v1/users/{parent_telegram_id}/student/history",
+                            params={"page": page, "page_size": 5})
+            if r.status_code == 404:
+                return None
             r.raise_for_status()
             return r.json()
 

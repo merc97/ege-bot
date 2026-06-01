@@ -6,9 +6,10 @@ from app.api.deps import verify_api_key
 from app.database import get_session
 from app.models.session import SessionAnswer
 from app.models.user import User
-from app.schemas.user import UserOut, UserRegister, UserOnboarding
+from app.schemas.user import UserOut, UserRegister, UserOnboarding, LinkStudentRequest
 from app.schemas.session import HistoryOut, AnswerHistoryItem
 from app.services.user_service import UserService
+from app.services.progress_service import ProgressService
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -38,6 +39,73 @@ async def complete_onboarding(
 ):
     svc = UserService(db)
     return await svc.complete_onboarding(telegram_id, data)
+
+
+@router.post("/{telegram_id}/link-student", response_model=UserOut, dependencies=[Depends(verify_api_key)])
+async def link_student(
+    telegram_id: int,
+    body: LinkStudentRequest,
+    db: AsyncSession = Depends(get_session),
+):
+    from fastapi import HTTPException
+    svc = UserService(db)
+    try:
+        return await svc.link_parent_to_student(telegram_id, body.student_code)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.get("/{telegram_id}/student", response_model=UserOut, dependencies=[Depends(verify_api_key)])
+async def get_linked_student(telegram_id: int, db: AsyncSession = Depends(get_session)):
+    from fastapi import HTTPException
+    svc = UserService(db)
+    student = await svc.get_linked_student(telegram_id)
+    if not student:
+        raise HTTPException(status_code=404, detail="No linked student")
+    return student
+
+
+@router.get("/{telegram_id}/student/progress", dependencies=[Depends(verify_api_key)])
+async def get_student_progress(telegram_id: int, db: AsyncSession = Depends(get_session)):
+    from fastapi import HTTPException
+    svc = UserService(db)
+    student = await svc.get_linked_student(telegram_id)
+    if not student:
+        raise HTTPException(status_code=404, detail="No linked student")
+    prog_svc = ProgressService(db)
+    result = await prog_svc.get_summary(student.telegram_id)
+    return result or {"telegram_id": student.telegram_id, "subjects": [], "total_sessions": 0, "streak_days": 0}
+
+
+@router.get("/{telegram_id}/student/history", response_model=HistoryOut, dependencies=[Depends(verify_api_key)])
+async def get_student_history(
+    telegram_id: int,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(5, ge=1, le=20),
+    db: AsyncSession = Depends(get_session),
+):
+    from fastapi import HTTPException
+    from app.models.session import TestSession
+    svc = UserService(db)
+    student = await svc.get_linked_student(telegram_id)
+    if not student:
+        raise HTTPException(status_code=404, detail="No linked student")
+    student_session_ids = select(TestSession.id).where(TestSession.user_id == student.id)
+    total = (await db.execute(
+        select(func.count(SessionAnswer.id)).where(SessionAnswer.session_id.in_(student_session_ids))
+    )).scalar_one()
+    rows = (await db.execute(
+        select(SessionAnswer)
+        .where(SessionAnswer.session_id.in_(student_session_ids))
+        .order_by(SessionAnswer.answered_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )).scalars().all()
+    return HistoryOut(
+        items=[AnswerHistoryItem.model_validate(i) for i in rows],
+        total=total, page=page,
+        pages=max(1, (total + page_size - 1) // page_size),
+    )
 
 
 @router.get("/{telegram_id}/history", response_model=HistoryOut, dependencies=[Depends(verify_api_key)])

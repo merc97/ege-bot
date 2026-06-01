@@ -10,8 +10,13 @@ class UserRegister(BaseModel):
 
 
 class UserOnboarding(BaseModel):
-    selected_exam: str
-    selected_subjects: list[str]
+    role: str = "student"
+    selected_exam: str | None = None
+    selected_subjects: list[str] | None = None
+
+
+class LinkStudentRequest(BaseModel):
+    student_code: str
 
 
 class UserOut(BaseModel):
@@ -21,9 +26,12 @@ class UserOut(BaseModel):
     telegram_id: int
     username: str | None
     first_name: str
+    role: str
+    linked_student_id: int | None
     subscription_type: str
     subscription_end: datetime | None
     onboarding_done: bool
     selected_exam: str | None
     selected_subjects: list[str] | None
+    referral_code: str | None
     created_at: datetime

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Boolean, DateTime, Integer, JSON, String, func
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, JSON, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -14,6 +14,9 @@ class User(Base):
     username: Mapped[str | None] = mapped_column(String(64))
     first_name: Mapped[str] = mapped_column(String(128), nullable=False)
     last_name: Mapped[str | None] = mapped_column(String(128))
+    role: Mapped[str] = mapped_column(String(16), nullable=False, default="student")
+    linked_student_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("users.id"), index=True)
+    parent_linked_at: Mapped[datetime | None] = mapped_column(DateTime)
     subscription_type: Mapped[str] = mapped_column(String(16), nullable=False, default="free")
     subscription_end: Mapped[datetime | None] = mapped_column(DateTime)
     onboarding_done: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

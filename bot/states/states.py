@@ -2,8 +2,10 @@ from aiogram.fsm.state import State, StatesGroup
 
 
 class OnboardingStates(StatesGroup):
+    choosing_role = State()
     choosing_exam = State()
     choosing_subjects = State()
+    linking_student = State()
 
 
 class TestStates(StatesGroup):

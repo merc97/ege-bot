@@ -56,25 +56,42 @@ async def pre_checkout(query: PreCheckoutQuery):
 @router.message(F.successful_payment)
 async def successful_payment(message: Message, api: APIClient):
     payment = message.successful_payment
-    telegram_id = message.from_user.id
+    payer_id = message.from_user.id
+
+    # payload: premium_stars_{tg_id}  OR  premium_stars_student_{student_tg_id}
+    payload = payment.invoice_payload or ""
+    if payload.startswith("premium_stars_student_"):
+        target_id = int(payload.replace("premium_stars_student_", ""))
+    else:
+        target_id = payer_id
 
     try:
         await api.activate_subscription(
-            telegram_id=telegram_id,
+            telegram_id=target_id,
             provider="stars",
             payment_id=payment.telegram_payment_charge_id,
             amount=payment.total_amount,
             currency=payment.currency,
             days=30,
         )
-        await message.answer(
-            "🎉 <b>Подписка активирована!</b>\n\n"
-            "⭐ Premium на 30 дней подключён.\n"
-            "Теперь тебе доступны безлимитные AI-объяснения ошибок!\n\n"
-            "Удачи в подготовке 💪",
-            reply_markup=main_menu_keyboard(),
-            parse_mode="HTML",
-        )
+        for_student = target_id != payer_id
+        if for_student:
+            await message.answer(
+                "🎉 <b>Premium активирован для ученика!</b>\n\n"
+                "⭐ 30 дней безлимитных AI-объяснений.\n"
+                "Ребёнок уже может пользоваться.",
+                reply_markup=main_menu_keyboard(),
+                parse_mode="HTML",
+            )
+        else:
+            await message.answer(
+                "🎉 <b>Подписка активирована!</b>\n\n"
+                "⭐ Premium на 30 дней подключён.\n"
+                "Теперь доступны безлимитные AI-объяснения ошибок!\n\n"
+                "Удачи в подготовке 💪",
+                reply_markup=main_menu_keyboard(),
+                parse_mode="HTML",
+            )
     except Exception:
         logger.exception("Failed to activate subscription for user %d", telegram_id)
         await message.answer(
