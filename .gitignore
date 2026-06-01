@@ -8,3 +8,4 @@ data/certbot/
 data/questions/
 *.xlsx
 *.csv
+scripts/scraper_venv/

@@ -21,6 +21,7 @@ def main_menu_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(text="📚 Начать тест", callback_data="menu:test")
     builder.button(text="📊 Мой прогресс", callback_data="menu:progress")
+    builder.button(text="⚙️ Настройки", callback_data="menu:settings")
     builder.button(text="❓ FAQ", callback_data="menu:faq")
     builder.button(text="⭐ Подписка", callback_data="menu:subscribe")
     builder.adjust(2)
