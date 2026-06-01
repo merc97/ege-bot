@@ -2,7 +2,7 @@ from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery
 
-from bot.keyboards.inline import back_to_menu_keyboard
+from bot.keyboards.inline import back_to_menu_keyboard, progress_keyboard
 from bot.utils.api_client import APIClient
 
 router = Router()
@@ -23,7 +23,7 @@ async def show_progress(callback: CallbackQuery, api: APIClient):
         await callback.message.edit_text(
             "📊 <b>Прогресс</b>\n\n"
             "Пока нет данных. Реши хотя бы несколько заданий!",
-            reply_markup=back_to_menu_keyboard(),
+            reply_markup=progress_keyboard(),
             parse_mode="HTML",
         )
         return
@@ -43,7 +43,7 @@ async def show_progress(callback: CallbackQuery, api: APIClient):
 
     await callback.message.edit_text(
         "\n".join(lines),
-        reply_markup=back_to_menu_keyboard(),
+        reply_markup=progress_keyboard(),
         parse_mode="HTML",
     )
 

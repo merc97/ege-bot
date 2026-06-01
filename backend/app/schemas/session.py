@@ -37,6 +37,28 @@ class SessionOut(BaseModel):
     finished_at: datetime | None
 
 
+class AnswerHistoryItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    subject: str | None
+    task_number: int | None
+    question_text: str | None
+    correct_answer_snapshot: str | None
+    user_answer: str | None
+    is_correct: bool | None
+    ai_explanation: str | None
+    shown_at: datetime | None
+    answered_at: datetime
+
+
+class HistoryOut(BaseModel):
+    items: list[AnswerHistoryItem]
+    total: int
+    page: int
+    pages: int
+
+
 class ProgressSubject(BaseModel):
     subject: str
     total_attempts: int

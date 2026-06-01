@@ -104,6 +104,14 @@ def subscribe_keyboard() -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
+def progress_keyboard() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.button(text="📋 История ответов", callback_data="menu:history")
+    builder.button(text="🔙 Главное меню", callback_data="menu:main")
+    builder.adjust(1)
+    return builder.as_markup()
+
+
 def back_to_menu_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(text="🔙 Главное меню", callback_data="menu:main")

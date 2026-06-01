@@ -64,10 +64,15 @@ class SessionService:
         self.db.add(SessionAnswer(
             session_id=session_id,
             task_id=task_id,
+            subject=task.subject,
+            task_number=task.task_number,
+            question_text=task.question_text,
+            correct_answer_snapshot=task.correct_answer,
             user_answer=user_answer,
             is_correct=is_correct,
             ai_explanation=ai_explanation,
             time_spent=time_spent,
+            shown_at=datetime.utcnow(),
         ))
 
         await self.db.execute(

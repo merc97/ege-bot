@@ -85,6 +85,15 @@ class APIClient:
             r.raise_for_status()
             return r.json()
 
+    async def get_history(self, telegram_id: int, page: int = 1, page_size: int = 5) -> dict | None:
+        async with self._client() as c:
+            r = await c.get(f"/api/v1/users/{telegram_id}/history",
+                            params={"page": page, "page_size": page_size})
+            if r.status_code == 404:
+                return None
+            r.raise_for_status()
+            return r.json()
+
     async def get_progress(self, telegram_id: int) -> dict | None:
         async with self._client() as c:
             r = await c.get(f"/api/v1/sessions/progress/{telegram_id}")
