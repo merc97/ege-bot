@@ -1,0 +1,10 @@
+.env
+*.pyc
+__pycache__/
+*.egg-info/
+.pytest_cache/
+logs/
+data/certbot/
+data/questions/
+*.xlsx
+*.csv
